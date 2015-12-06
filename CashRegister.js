@@ -1,5 +1,23 @@
 'use strict';
 
+/**
+ * Dependencies:
+ *
+ * scan: 
+ *   - transaction service
+ *   - inventory service
+ *
+ *
+ * applyDiscount:
+ *   - transaction service
+ *   - discount service/subservices
+ *
+ * currentTransaction/Total:
+ *
+ *
+ * Open question: where should I check if a cash register's transaction is 
+ * completed? (encourage atomicity of transactions)
+ */
 
 class CashRegister {
   constuctor() {
@@ -40,6 +58,11 @@ class CashRegister {
      *
      * side effect
      */
+    
+    /**
+     * assumption/tech debt: 
+     * must check if current transaction has not already been processed
+     */
   }
 
   /**
@@ -64,7 +87,10 @@ class CashRegister {
      */
     
     /**
-     * ASSUMPTION: Stacked discounts will be applied to the current 
+     * ASSUMPTION: 
+     *
+     * 1. 
+     * Stacked discounts will be applied to the current 
      * transaction. No rules for limit of discounts.
      * NOTE, this will be incomplete. Discount service should handle
      * constrains of the discount. 
@@ -76,6 +102,9 @@ class CashRegister {
      *     discountApplier (applies discounts in a predictable manner, as 
      *     order matters when applying percentages and adding/removing ites
      *     )
+     *
+     * 2. these are applied to the transaction at "process time"
+     *   want a processTransaction function?
      */
 
   }
