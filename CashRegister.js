@@ -81,20 +81,17 @@ class CashRegister {
   }
 
   /**
-   * [currentTransaction description]
-   * inputs: none
-   * outputs: returns the cash register's currentTransaction object,
-   * including:
-   *
-   * list of all items
-   * a function for calculating current cost of a List
+   * returns current list of items
    * @return {[type]} [description]
    */
-  currentTransaction() {
+  get currentTransactionItemList() {
 
   }
 
+  //returns total cost of current list of items
+  get currentTransactionTotalCost() {
 
+  }
 
   //Helper
   removeDiscount() {
@@ -105,19 +102,8 @@ class CashRegister {
      */
   }
 
-
   /**
-   * inputs: a transaction object
-   * outputs: a cost of list
-   * @param  {[type]} list [description]
-   * @return {[type]}      [description]
-   */
-  static calculateTotalCostOf(list) {
-
-  }
-
-  /**
-   * Assumption / concern: maybe a transaction should be its own
+   * Assumption / tech debt: maybe a transaction should be its own
    * type-safe list. Too much abstraction?
    */
 }
