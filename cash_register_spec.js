@@ -1,1 +1,1 @@
-cash_register_spec.js
+'use strict';
