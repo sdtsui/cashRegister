@@ -5,7 +5,7 @@
  *
  * scan: 
  *   - transaction service
- *   - inventory service
+ *   - inventory service (pricing sub-service?)
  *
  *
  * applyDiscount:
