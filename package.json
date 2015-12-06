@@ -15,5 +15,9 @@
   "bugs": {
     "url": "https://github.com/sdtsui/cashRegister/issues"
   },
-  "homepage": "https://github.com/sdtsui/cashRegister#readme"
+  "homepage": "https://github.com/sdtsui/cashRegister#readme",
+  "devDependencies": {
+    "jasmine": "^2.4.1",
+    "supertest": "^1.1.0"
+  }
 }
