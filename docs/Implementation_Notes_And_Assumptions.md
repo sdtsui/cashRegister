@@ -9,11 +9,12 @@ Thus, a Transaction Object should store only a list of items, and a list of disc
 
 Whenever the Cash Register needs to tell the frontend what the total list and cost of items is, it will ask the Transactions Service to apply all discounts, and return an transaction object with (1) free items appended, and (2). 
 
-Then, when this transaction is 'ended' or processed, the Transaction Service can notify the Discount and Inventory services for tracking internal purposes.
+This has no effect on the cash register's state, and is only so the frontend can get an accurate picture of the transaction, with discounts applied.
 
-If anything, the frontend can now query the Transaction Service directly if needed, if it wants to process a transaction. The Cash Register no longer has to serve as an interface for the entire checkout pipeline.
+#### On Purchases / Completing Transactions:
 
+When the transaction is 'ended' or processed, the Transaction Service can internally apply discounts again, notifing the Discount and Inventory services for tracking internal purposes.
 
-## Overview of Services
+One consequence of this implemnetation is that the frontend can now query the Transaction Service directly if needed, if it wants to process a transaction. The Cash Register no longer has to serve as an interface for the entire checkout pipeline.
+(Todo: write a test for this, using the Transaction Service mock?)
 
-#### Discounts Service: 

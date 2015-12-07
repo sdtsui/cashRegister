@@ -4,17 +4,27 @@ let CashRegister = require("./CashRegister.js");
 
 describe('Cash Register', function() {
   
-  beforeEach(() => {
-
-  });
 
 
   describe('methods', function() {
-    it('should have a scan method', function() {
+    beforeEach(() => {
+      let cash = new CashRegister();
+    });
+
+
+    it('should have a scanItem method', function() {
+      expect(typeof cash.scanItem).toBe('function');
+    });
+
+    it('should have a way to add items', function() {
+      expect(typeof cash.addItem).toBe('function');
+    });
+    
+    it('should have a scanDiscount method', function() {
       
     });
 
-    it('should have an apply discount method', function() {
+    it('should have a way to apply discounts', function() {
       
     });
 

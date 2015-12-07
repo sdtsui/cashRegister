@@ -1,19 +1,21 @@
 /**
- * 
- *The 3 main requirements are:
-
+ *
+ Requirements: 
 • It needs to be able to scan items in by quantity and weight
-
-• It needs to be able to handle discount coupons... allow for two different types of 
-
+• It needs to be able to handle discount coupons... allow for two different types of
 coupons
-
-o % off total
-
-o Buy ‘x’ get ‘y’ free (i.e. buy 3 get 1 free)
-
+o %offtotal
+o Buy‘x’get‘y’free(i.e.buy3get1free)
 • It should be able to provide a caller with a total cost and a list of items
+Things to keep in mind:
+•
+￼We are only interested in the server side implementation and want to see code only, so
+￼please do not work on any UI.
 
+Constraints: 
+• Your implementation should be approached as one that would fit within a larger application and so should exhibit proper software design principles, modularity, reusability, and be an example of your own best coding practices.
+• A partial but well thought out, well-written solution will score much higher than a poorly written but complete solution.
+• Be sure to document any assumptions you make in the course of your work.
  *
  *
  *

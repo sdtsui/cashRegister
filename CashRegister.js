@@ -6,7 +6,6 @@ let DiscountsController = require("./services/Discounts.js");
 
 class CashRegister {
   constuctor() {
-
   } 
 
   startTransaction(cb) {
@@ -29,7 +28,7 @@ class CashRegister {
   }
 
   scanItem(itemID, cb) {
-    InventoryController.getDetails(itemID)
+    InventoryController.findOne(itemID)
       .then((err, item) => {
         if (err) {
           throw new Error('errorText');
@@ -41,7 +40,7 @@ class CashRegister {
   addItem(trans_ID, item_ID, quant, cb) {
     //no error checking because it happens in scanAndAdd?
     //get and validate
-    TransactionsController.getTransaction(trans_ID,
+    TransactionsController.findOne(trans_ID,
       (err, transactionJSON) => {
         //transactionJSON might be null
         if (!!transactionJSON) {
@@ -101,7 +100,7 @@ class CashRegister {
   }
 
   scanDiscount(couponID, cb) {
-    DiscountsController.getDetails(couponID)
+    DiscountsController.findOne(couponID)
       .then((err, discount) => {
         if (err) {
           throw new Error('errorText');
@@ -112,7 +111,7 @@ class CashRegister {
 
   addDiscount(trans_ID, Discount_ID, cb) {
     //get and validate
-    TransactionsController.getTransaction(trans_ID,
+    TransactionsController.findOne(trans_ID,
       (err, transactionJSON) => {
         //transactionJSON might be null
         if (!!transactionJSON) {
@@ -131,7 +130,7 @@ class CashRegister {
   static updateTransaction(trans_obj, cb) {
     //will use validate
     //could update completed?
-    TransactionsController.updateID(trans_obj,
+    TransactionsController.updateOne(trans_obj,
       (err, transactionJSON)=> {
         let updated_transaction = JSON.parse(transactionJSON);
         cb(err, updated_transaction);
@@ -157,12 +156,14 @@ class CashRegister {
         cb(err, false);
       })
       .then((err, allInStock) => {
+        //error callback code smell, ECCS
         if (!err && !!allInStock) {
-          return DiscountsController.getDiscounts(fetchedTransaction.discountList);
+          return DiscountsController.checkIfDiscountsValid(fetchedTransaction.discountList);
         }
         cb(err, false);
       })
       .then((err, allValid) => {
+        //error callback code smell, ECCS
         if (!err && !!allValid) {
           return cb(null, true, fetchedTransaction);
         }
@@ -170,11 +171,11 @@ class CashRegister {
       });
   }
 
-  static getTotalCost(id, cb) {
+  static getTrasactionCost(id, cb) {
     CashRegister.getTransaction(id, cb, "cost");
   }
 
-  static getListOfItems(id, cb) {
+  static getTransactionItemList(id, cb) {
     CashRegister.getTransaction(id, cb "items");
   }
 
@@ -187,7 +188,7 @@ class CashRegister {
       cb (err, null);
       }
     }
-    TransactionsController.getTransaction(id, 
+    TransactionsController.findOne(id, 
       (err, transactionJSON) => {
         if (!flag) {
           //no flag, want only JSON
