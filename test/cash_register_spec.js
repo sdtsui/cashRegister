@@ -5,25 +5,22 @@ let CashRegister = require("./CashRegister.js");
 describe('Cash Register', function() {
   
   describe('Static Methods', function() {
-    beforeEach(() => {
-      let cash = new CashRegister();
-    });
-
     it('should have getTransactionCost method', function() {
-          
+      expect(typeof CashReigster.getTransactionCost).toBe('function');
     });    
 
     it('should have getTransactionItemList method', function() {
+      expect(typeof CashReigster.getTransactionItemList).toBe('function');
       
     });
 
     it('should have updateTransaction method', function() {
+      expect(typeof CashReigster.updateTransaction).toBe('function');
       
     });
 
-
     it('should have checkIfTransactionIsValid method', function() {
-      
+      expect(typeof CashReigster.checkIfTransactionIsValid).toBe('function');
     });
 
   });
