@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "karma start"
+    "test": "mocha --compilers js:mocha-traceur"
   },
   "repository": {
     "type": "git",
@@ -17,7 +17,11 @@
   },
   "homepage": "https://github.com/sdtsui/cashRegister#readme",
   "devDependencies": {
+    "arrow-mocha": "^1.0.1",
+    "expect": "^1.13.0",
     "jasmine": "^2.4.1",
+    "mocha": "^2.3.4",
+    "mocha-traceur": "^2.1.0",
     "supertest": "^1.1.0"
   }
 }

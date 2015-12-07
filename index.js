@@ -1,6 +1,6 @@
 'use strict';
 
-let CashRegister = require("./CashRegister");
+let CashRegister = require("./src/CashRegister");
 
 console.log("Cr: ", CashRegister);
 

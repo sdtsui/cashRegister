@@ -1,35 +1,33 @@
 'use strict';
-
-var CashRegister = require("./CashRegister.js");
+let CashRegister = require("../src/CashRegister.js");
+import { it, before, after, beforeEach, afterEach } from 'arrow-mocha'
+let expect = require('expect');
 
 describe('Cash Register', function() {
   
   describe('Static Methods', function() {
     it('should have getTransactionCost method', function() {
-      expect(typeof CashReigster.getTransactionCost).toBe('function');
-    });    
+      expect(typeof CashRegister.getTransactionCost).toBe('function');
+    });
 
     it('should have getTransactionItemList method', function() {
-      expect(typeof CashReigster.getTransactionItemList).toBe('function');
+      expect(typeof CashRegister.getTransactionItemList).toBe('function');
       
     });
 
     it('should have updateTransaction method', function() {
-      expect(typeof CashReigster.updateTransaction).toBe('function');
+      expect(typeof CashRegister.updateTransaction).toBe('function');
       
     });
 
     it('should have checkIfTransactionIsValid method', function() {
-      expect(typeof CashReigster.checkIfTransactionIsValid).toBe('function');
+      expect(typeof CashRegister.checkIfTransactionIsValid).toBe('function');
     });
 
   });
 
   describe('instance methods', function() {
-    beforeEach(function() {
-      var cash = new CashRegister();
-    });
-
+    let cash = new CashRegister();
 
     it('should have a scanItem method', function() {
       expect(typeof cash.scanItem).toBe('function');

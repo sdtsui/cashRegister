@@ -177,8 +177,8 @@ class CashRegister {
         cb(err, false);
       });
   }
-  
-  static getTransactionCost(id, cb) {
+
+  static getTrasactionCost(id, cb) {
     CashRegister.getTransaction(id, cb, "cost");
   }
 
