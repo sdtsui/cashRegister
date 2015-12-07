@@ -38,9 +38,9 @@ class CashRegister {
     InventoryController.findOne(itemID)
       .then((err, item) => {
         if (err) {
-          throw new Error('errorText');
-        }        
-        cb(err, item);
+          return cb && cb(err, null);
+        }
+        return cb && cb(null, item);
       });
   }
 

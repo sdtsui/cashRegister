@@ -48,56 +48,36 @@ describe('Cash Register', function() {
   });
 
   describe('scan functionality', function() {
+    let cash = new CashRegister();
     it('should be able to scan an item', function() {
-      
+      cash.scanItem(00, (err, item) => {
+        expect(err).toBeNull();
+        expect(item.ID)toEqual(00);
+        expect(item.name)toEqual('orange');
+        expect(item.rate)toEqual(2);
+      });
     });
 
     it('should be able to scan multiple items in succession', function() {
-      
+      let expectations = (err, item) => {
+        expect(err).toBeNull();
+        expect(item).toBeTruthy();
+        expect(typeof item.ID).toBe('number');
+        expect(typeof item.name).toBe('string');
+      }
+      let IDs = [00, 01, 02];
+      IDs.forEach((ID)=> {
+        cash.scanItem(ID, expectations);
+      });
     });
 
     it('should not scan without a specified SKU/id', function() {
-      
-    });
-
-    it('should scan with only an ID, assuming ONE(1) quantity', function() {
-      
-    });    
-  });
-
-  describe('apply discount functionality', function() {
-    it('should be able to apply a discount', function() {
-      
-    });
-
-    it('should throw without a discount ID', function() {
-      
-    });
-
-    it('should be able to apply multiple discounts', function() {
-      
-    });
-
-  });
-
-  describe('get currentTransaction functionality', function() {
-    it('should get an empty transaction', function() {
-      
-    });
-
-    it('should return all of the items scanned', function() {
-      
-    });
-
-    it('should not return items that have been removed', function() {
-      
-    });
-    
-    it('should return a function that calculates a total', function() {
-      
+      let expectation = (err, item) => {
+        expect(err).toBeTruthy();
+        expect(item).toBeNull();
+      }
+      cash.scanItem(null, expectation);      
     });
   });
-
-
 
 });
