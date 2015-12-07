@@ -8,6 +8,7 @@ class CashRegister {
   constuctor() {
   } 
 
+  //creates a new transaction, using the transactionController and returns it
   startTransaction(cb) {
     TransactionsController.createNew()
       .then((err, transactionJSON) => {
@@ -16,11 +17,13 @@ class CashRegister {
         }
         return cb && cb(err, null);
       })
-      //err, transationJSON
   }
 
+  // inputs: transaction id, and callback
+  // outputs: none
+  // side effects: if transaction is valid, updates it with transactionController
+  // Todo: logic for invalid transactions. Return an error message.
   endTransaction(id, cb) {
-    //must update. To be completed after updateTransaction
     CashRegister.checkIfTransactionIsValid(id,
       (err, isValid, transactionObj)=> {
         if (!!isValid) {
@@ -30,6 +33,9 @@ class CashRegister {
       });
   }
 
+  //Inputs: itemID, and cb
+  // outputs: none
+  // side effects: invokes callbacks on a found item, or passes an error
   scanItem(itemID, cb) {
     InventoryController.findOne(itemID, (err, item) => {
         if (err) {
@@ -39,6 +45,11 @@ class CashRegister {
       });
   }
 
+
+  //Inputs: transactionID, itemID, quantity, callback
+  //finds the transaction, validates it, and updates with quantity of item
+  //if successful, invokes callback on new item
+  //Todo: error checking, invoking callback on error
   addItem(trans_ID, item_ID, quant, cb) {
     //no error checking because it happens in scanAndAdd?
     //get and validate
@@ -59,9 +70,13 @@ class CashRegister {
     );
   }
 
+  //Not meant to be called externally. 
+  //Scans and adds a discount or item, depending on flag.
+  //todo: error checking. improve dry-ness of code.
+  //
+  //for `item` usage: expects: str, fn, 'item', num
+  //for `discount` usage: expects: str, fn, 'discount', null
   scanAndAdd(id, flag, qty, cb) {
-    //for item usage: expects: str, fn, 'item', num
-    //for discount: expects: str, fn, 'discount', null
     if (!flag && typeof flag === 'string') {
       //flag exists
       if (flag === 'discount') {
@@ -101,6 +116,7 @@ class CashRegister {
     }
   }
 
+  //Similar to .scanItem, but for Discounts, using the discountController
   scanDiscount(couponID, cb) {
     DiscountsController.findOne(couponID)
       .then((err, discount) => {
@@ -111,6 +127,7 @@ class CashRegister {
       });
   }
 
+  //Similar to .addItem, but for Discounts, using the discountController
   addDiscount(trans_ID, Discount_ID, cb) {
     //get and validate
     TransactionsController.findOne(trans_ID,
@@ -129,9 +146,9 @@ class CashRegister {
     );
   }
   
+  //takes a transaction objed and updates it in the transactionController
+  //Todo: input validation?
   static updateTransaction(trans_obj, cb) {
-    //will use validate
-    //could update completed?
     TransactionsController.updateOne(trans_obj,
       (err, transactionJSON)=> {
         let updated_transaction = JSON.parse(transactionJSON);
@@ -140,6 +157,15 @@ class CashRegister {
     );
   }
 
+  //checks if a transaction is vaid by checking if:
+  //transaction exists on the back-end
+  //all items are in stock
+  //all discounts are valid
+  //
+  //if so, invokes callback on the valid transaction
+  //otherwise, invokes callback with a error
+  //
+  //todo: more explicit commenting
   static checkIfTransactionIsValid(transaction, cb) {
     //if number, is an ID. if object, get ID.
     let getID = typeof transaction === 'number' ? transaction : 
@@ -185,14 +211,22 @@ class CashRegister {
       });
   }
   
+  //calls getTransaction with a 'cost' flag, invoking a callback with the total cost
   static getTransactionCost(id, cb) {
     CashRegister.getTransaction(id, cb, "cost");
   }
 
+
+  //calls getTransaction with a 'items' flag, invoking a callback with the list of items
   static getTransactionItemList(id, cb) {
     CashRegister.getTransaction(id, cb, "items");
   }
 
+
+  //gets a transaction using findOne
+  //Todo: complete error checking with this function, and removal of all instances of:
+  //  `TransactionsController.findOne` in CashRegister code.
+  //  More explicit code commenting
   static getTransaction(id, cb, flag) {
     if (!!flag) {
       //flag exists
@@ -217,6 +251,8 @@ class CashRegister {
       }
     );
 
+
+
     /**
      * Incomplete: will refactor, so this logic is in transaction service
      */
@@ -236,11 +272,14 @@ class CashRegister {
     //refactor into transactionsController
   }
 
+
+  //Pleaceholder function for discounts. Logic will be stubbed in transactionController
   static generateDiscounts(transaction) {
     transaction.discountList.forEach()
     //returns an array of {type %, or type %/x-y}
   }
 
+  //Pleaceholder function for discounts. Logic will be stubbed in transactionController
   static applyDiscounts(transaction) {
     //applies a discount, appends 
     // freeItems
