@@ -19,6 +19,15 @@
  * completed? (encourage atomicity of transactions)
  */
 
+
+
+
+let TransactionsController = require("./services/Transactions.js");
+let InventoryController = require("./services/Inventory.js");
+let PricingController = require("./services/Pricing.js");
+let DiscountsController = require("./services/Discounts.js");
+
+
 class CashRegister {
   constuctor() {
     this.currentTransactionID = null;
