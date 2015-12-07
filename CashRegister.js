@@ -9,11 +9,18 @@ class CashRegister {
   } 
 
   startTransaction(cb) {
+    var func = () => ({ foo: 1 });
+    let bob = function() {
+
+    };
     TransactionsController.createNew()
       .then((err, transactionJSON) => {
-        let trans_obj = JSON.parse(transactionJSON);
-        cb(err, trans_obj.ID);
+        if(!err) {
+          return cb && cb(null, transactionJSON);
+        }
+        return cb && cb(err, null);
       })
+      //err, transationJSON
   }
 
   endTransaction(id, cb) {
@@ -176,10 +183,10 @@ class CashRegister {
   }
 
   static getTransactionItemList(id, cb) {
-    CashRegister.getTransaction(id, cb "items");
+    CashRegister.getTransaction(id, cb, "items");
   }
 
-  static getTransaction(id, cb, flag = undefined) {
+  static getTransaction(id, cb, flag) {
     if (!!flag) {
       //flag exists
       if (flag !== 'cost' || flag !== 'items') {
@@ -203,8 +210,11 @@ class CashRegister {
       }
     );
 
+    /**
+     * Incomplete: will refactor, so this logic is in transaction service
+     */
     //returns a total cost number
-    calc_cost() => {
+    function calc_cost(){
       //iterate through the list, tabulating cost
       //apply discount how?
       //
@@ -212,19 +222,19 @@ class CashRegister {
     }
 
     //returns a list of items, including free items from discounts
-    calc_list(transaction) => {
+    function calc_list(transaction){
       return transaction.itemList;
       //iterate through the list, getting total
     }
     //refactor into transactionsController
   }
 
-  static generateDiscounts(transaction) => {
+  static generateDiscounts(transaction) {
     transaction.discountList.forEach()
     //returns an array of {type %, or type %/x-y}
   }
 
-  static applyDiscounts(transaction) => {
+  static applyDiscounts(transaction) {
     //applies a discount, appends 
     // freeItems
     // negative cost 'discount items'

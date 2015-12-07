@@ -1,6 +1,6 @@
 'use strict';
 
-let CashRegister = require("./CashRegister.js");
+var CashRegister = require("./CashRegister.js");
 
 describe('Cash Register', function() {
   
@@ -26,8 +26,8 @@ describe('Cash Register', function() {
   });
 
   describe('instance methods', function() {
-    beforeEach(() => {
-      let cash = new CashRegister();
+    beforeEach(function() {
+      var cash = new CashRegister();
     });
 
 
