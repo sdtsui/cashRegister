@@ -9,21 +9,37 @@ let DiscountsController = require("./services/Discounts.js");
 class CashRegister {
   constuctor() {
     this.currentTransaction = null;
+
   } 
 
-  /**
-   * inputs: item paramaters in strings and numers
-   * outputs: none
-   * side effects: adds an item-quantity-unit tuple to the current transaction
-   * @return {[type]} [description]
-   */
-  scan(itemID, unitID = 00, quantity = 1, cb) {
-    if (!!itemID || typeof itemID !== number) { 
-      return new Error("Scan failed: Invalid itemID.");
-    }
+  //findOrCreate Logic
+  startTransaction() {
+    //if there is no current transaction
+    //  create a new one, insert as pending
+    //else : there is a current transaction
+    //  check if it matches the current DB
+    //  if it does:
+    //    update it, send to DB
+    //  if it does not:
+    //    take the new one, update it, send to DB
+    //cb ("success")?
 
-    if (!!this.currentTransaction) {
-      TransactionsController.findOne({itemID: itemID}, (err, transaction) => {
+    if (this.current)
+    if (!this.currentTransaction) {
+      this.currentTransaction = {
+        ID : null,
+        completed: false,
+        discountApplied: false,
+        itemList: [], // {ID, unit, quant, rate}
+        currentDiscounts: [], // ID
+        total: undefined,
+      }
+
+      TransactionsController.insertNew(this.currentTransaction);
+    } else {
+      
+    }
+      TransactionsController.findOne(this.currentTransaction, (err, transaction) => {
         //if error
         if (!!err) {
           console.log("Error in CashRegister, from TransactionsController: ",
@@ -31,29 +47,13 @@ class CashRegister {
             );
           cb(err, null);
         } else {
-          //refactor into createNewTransaction?
-          this.currentTransaction = {
-            ID : transaction.ID,
-            completed: false,
-            discountApplied: false,
-            itemList: [], // {ID, unit, quant, rate}
-            currentDiscounts: [], // ID
-            total: undefined,
+          if (!!transaction) {
+            //found, already in service
+
+          } else {
+            //none found, must create new
           }
-          //interface between transactions service, and cashregister needed?
-          //convert transaction object to currentTransaction
-          //Assumption: inventory logic returns:
-          //item:
-          //  {
-          //    itemID : ,
-          //    unitID: ,
-          //    quantity: ,
-          //    rate: , 
-          //    
-          //  }
-          //add to current transaction?
-          //if pricing service is needed, it goes here
-          //
+
         } 
       })
     }
@@ -63,6 +63,39 @@ class CashRegister {
     cb(null, this.currentTransaction); //currentList?
     cb(null, "Success");
 
+
+  }
+
+  //no return value, only send complete transaction to DB
+  endTransaction() {
+    //resetTransaction
+  }
+
+  /**
+   * inputs: item paramaters in strings and numers
+   * outputs: none
+   * side effects: adds an item-quantity-unit tuple to the current transaction
+   * @return {[type]} [description]
+   */
+  scan(itemID, unitID = 00, quantity = 1, cb) {
+    //if there is no active transaction, throw
+    //if there is one, add to it.
+
+    // (two steps: scan, punch in quantity)
+    // scan item, automatically add it as one unit;
+    //  -edit item afterwards
+
+    //scan item
+    //enter quantity and unit
+    //add to card
+    //
+    //scanAndAdd Method
+    if (!itemID || typeof itemID !== number) { 
+      return new Error("Scan failed: Invalid itemID.");
+    }
+    //find price data, update
+    let rate = PricingController.getRate(unitID, quantity);
+    let itemCost = rate * quantity;
   }
 
   /**
@@ -77,36 +110,8 @@ class CashRegister {
    * @return {[type]} [description]
    */
   applyDiscount(discountID) {
-    /**
-     * 
-     * check if discount exists, from the discountService
-     *
-     * if so, add discount list, 
-     * which can have multiple discounts and duplicates of this discount.
-     * 
-     */
+    //if there is no current transaction: return error
     
-    /**
-     * ASSUMPTION: 
-     *
-     * 1. 
-     * Stacked discounts will be applied to the current 
-     * transaction. No rules for limit of discounts.
-     * NOTE, this will be incomplete. Discount service should handle
-     * constrains of the discount. 
-     *
-     *
-     * Ideally, the whole transaction gets sent to the discount service 
-     *   perhaps split into two parts:     
-     *     discountTracker (tracks all active discounts)
-     *     discountApplier (applies discounts in a predictable manner, as 
-     *     order matters when applying percentages and adding/removing ites
-     *     )
-     *
-     * 2. these are applied to the transaction at "process time"
-     *   want a processTransaction function?
-     */
-
   }
 
   /**
