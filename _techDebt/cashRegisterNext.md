@@ -1,6 +1,8 @@
 Code smells to fix:
 
 
+0. refactor out of promises. remove all instances of .then
+
 1. error vs callbacks:
 
 Each for ECCS: 

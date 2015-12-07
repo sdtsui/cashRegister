@@ -2,10 +2,7 @@
 
 let CashRegister = require("./src/CashRegister");
 
-console.log("Cr: ", CashRegister);
+console.log("Cash Register Class: ", CashRegister);
 
-// let cash1 = new CashRegister();
-
-// cash1.startTransaction();
 
 

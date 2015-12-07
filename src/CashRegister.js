@@ -158,18 +158,30 @@ class CashRegister {
         cb(err, false);
       })
       .then((err, allInStock) => {
-        //error callback code smell, ECCS
+        if (err) {
+          cb(err, false, null);
+        }
+
+        if (!allInStock) {
+          cb(err, false, undefined); //list of out of stock should go here
+        }
+
         if (!err && !!allInStock) {
           return DiscountsController.checkIfDiscountsValid(fetchedTransaction.discountList);
         }
-        cb(err, false);
       })
       .then((err, allValid) => {
-        //error callback code smell, ECCS
+        if (err) {
+          cb(err, false, null);
+        }
+
+        if (!allInStock) {
+          cb(err, false, undefined); //list of invalid should go here
+        }
+
         if (!err && !!allValid) {
           return cb(null, true, fetchedTransaction);
         }
-        cb(err, false);
       });
   }
   
