@@ -1,27 +1,5 @@
 'use strict';
 
-/**
- * Dependencies:
- *
- * scan: 
- *   - transaction service
- *   - inventory service (pricing sub-service?)
- *
- *
- * applyDiscount:
- *   - transaction service
- *   - discount service/subservices
- *
- * currentTransaction/Total:
- *
- *
- * Open question: where should I check if a cash register's transaction is 
- * completed? (encourage atomicity of transactions)
- */
-
-
-
-
 let TransactionsController = require("./services/Transactions.js");
 let InventoryController = require("./services/Inventory.js");
 let PricingController = require("./services/Pricing.js");
@@ -30,12 +8,7 @@ let DiscountsController = require("./services/Discounts.js");
 
 class CashRegister {
   constuctor() {
-    this.currentTransactionID = null;
-    this.currentTransaction = {
-      itemList: [], // {id, unit, quant, rate}
-      currentDiscounts: [],
-      total: undefined,
-    }
+    this.currentTransaction = null;
   } 
 
   /**
@@ -44,34 +17,52 @@ class CashRegister {
    * side effects: adds an item-quantity-unit tuple to the current transaction
    * @return {[type]} [description]
    */
-  scan() {
-    // defaults: sku -> throw,
-    // unitID = unit
-    // quant = 1,
-    // thus shorhand will be .scan("123132") will add one orange
-    // signature of a listItem entry will be
-    // {
-    //    ID : ,
-    //    UNIT: ,
-    //    QUANT
-    // }
+  scan(itemID, unitID = 00, quantity = 1, cb) {
+    if (!!itemID || typeof itemID !== number) { 
+      return new Error("Scan failed: Invalid itemID.");
+    }
 
+    if (!!this.currentTransaction) {
+      TransactionsController.findOne({itemID: itemID}, (err, transaction) => {
+        //if error
+        if (!!err) {
+          console.log("Error in CashRegister, from TransactionsController: ",
+            err
+            );
+          cb(err, null);
+        } else {
+          //refactor into createNewTransaction?
+          this.currentTransaction = {
+            ID : transaction.ID,
+            completed: false,
+            discountApplied: false,
+            itemList: [], // {ID, unit, quant, rate}
+            currentDiscounts: [], // ID
+            total: undefined,
+          }
+          //interface between transactions service, and cashregister needed?
+          //convert transaction object to currentTransaction
+          //Assumption: inventory logic returns:
+          //item:
+          //  {
+          //    itemID : ,
+          //    unitID: ,
+          //    quantity: ,
+          //    rate: , 
+          //    
+          //  }
+          //add to current transaction?
+          //if pricing service is needed, it goes here
+          //
+        } 
+      })
+    }
+    this.currentTransaction.itemList.push(item);
+    //handle duplicates, etc? 
+    //
+    cb(null, this.currentTransaction); //currentList?
+    cb(null, "Success");
 
-    /**
-     * if no current transaction, fetch new
-     * scan item, if:
-     *   - id exists in inventoryService (separate method?)
-     *   - get human-readable name (unnecessary?)
-     *     - save (ID only to list)
-     *   - 
-     *
-     * side effect
-     */
-    
-    /**
-     * assumption/tech debt: 
-     * must check if current transaction has not already been processed
-     */
   }
 
   /**
