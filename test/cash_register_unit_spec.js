@@ -1,6 +1,6 @@
 'use strict';
 let CashRegister = require("../src/CashRegister.js");
-import { it, before, after, beforeEach, afterEach } from 'arrow-mocha'
+// import { it, before, after, beforeEach, afterEach } from 'arrow-mocha'
 let expect = require('expect');
 
 describe('Cash Register', function() {
@@ -50,22 +50,22 @@ describe('Cash Register', function() {
   describe('scan functionality', function() {
     let cash = new CashRegister();
     it('should be able to scan an item', function() {
-      cash.scanItem(00, (err, item) => {
-        expect(err).toBeNull();
-        expect(item.ID)toEqual(00);
-        expect(item.name)toEqual('orange');
-        expect(item.rate)toEqual(2);
+      cash.scanItem(0, (err, item) => {
+        expect(err).toBe(null);
+        expect(item.ID).toEqual(0);
+        expect(item.name).toEqual('orange');
+        expect(item.rate).toEqual(2);
       });
     });
 
     it('should be able to scan multiple items in succession', function() {
       let expectations = (err, item) => {
-        expect(err).toBeNull();
+        expect(err).toBe(null);
         expect(item).toBeTruthy();
         expect(typeof item.ID).toBe('number');
         expect(typeof item.name).toBe('string');
       }
-      let IDs = [00, 01, 02];
+      let IDs = [0, 1, 2];
       IDs.forEach((ID)=> {
         cash.scanItem(ID, expectations);
       });
@@ -74,7 +74,7 @@ describe('Cash Register', function() {
     it('should not scan without a specified SKU/id', function() {
       let expectation = (err, item) => {
         expect(err).toBeTruthy();
-        expect(item).toBeNull();
+        expect(item).toBe(null);
       }
       cash.scanItem(null, expectation);      
     });

@@ -9,10 +9,6 @@ class CashRegister {
   } 
 
   startTransaction(cb) {
-    var func = () => ({ foo: 1 });
-    let bob = function() {
-
-    };
     TransactionsController.createNew()
       .then((err, transactionJSON) => {
         if(!err) {
@@ -35,12 +31,11 @@ class CashRegister {
   }
 
   scanItem(itemID, cb) {
-    InventoryController.findOne(itemID)
-      .then((err, item) => {
+    InventoryController.findOne(itemID, (err, item) => {
         if (err) {
-          throw new Error('errorText');
-        }        
-        cb(err, item);
+          return cb && cb(err, null);
+        }
+        return cb && cb(null, item);
       });
   }
 
@@ -64,7 +59,7 @@ class CashRegister {
     );
   }
 
-  scanAndAdd(id, cb, flag, qty) {
+  scanAndAdd(id, flag, qty, cb) {
     //for item usage: expects: str, fn, 'item', num
     //for discount: expects: str, fn, 'discount', null
     if (!flag && typeof flag === 'string') {
@@ -177,8 +172,8 @@ class CashRegister {
         cb(err, false);
       });
   }
-
-  static getTrasactionCost(id, cb) {
+  
+  static getTransactionCost(id, cb) {
     CashRegister.getTransaction(id, cb, "cost");
   }
 
