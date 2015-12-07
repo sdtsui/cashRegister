@@ -5,7 +5,6 @@ let InventoryController = require("./services/Inventory.js");
 let PricingController = require("./services/Pricing.js");
 let DiscountsController = require("./services/Discounts.js");
 
-
 class CashRegister {
   constuctor() {
 
@@ -14,10 +13,10 @@ class CashRegister {
   scanItem(itemID, cb) {
     InventoryController.getDetails(itemID)
       .then((err, item) => {
-        cb(err, item);
         if (err) {
           throw new Error('errorText');
-        }
+        }        
+        cb(err, item);
       });
   }
 
@@ -82,47 +81,28 @@ class CashRegister {
     //could update completed?
   }
 
-  static transactionJSON_isValid(transaction) {
+  static checkIfTransactionIsValid(transaction, cb) {
     //this is a transaction that exists in the DB
-    
-    //transaction doesn't exist, defensive
-    TransactionController.getTransaction(transaction.id
-      (err, trans) => {
-        InventoryController.checkIfInStock(transaction.itemList,
-          (err, allInStock) => {
-            if(allInStock) {
-              DiscountsController.getDiscount(transaction.currentDiscounts,
-                () => {
-                });
-            }
-          }
-          );
-      }
-      );
     TransactionController.getTransaction(transaction.id)
+      //transaction doesn't exist, defensive
       .then((err, trans) => {
         if (!err ) {
           InventoryController.checkIfItemsInStock(transaction.itemList);
         }
+        cb(err, false);
       })
       .then((err, allInStock) => {
         if (!err && !!allInStock) {
           DiscountsController.getDiscounts(transaction.currentDiscounts);
         }
+        cb(err, false);
       })
       .then((err, allValid) => {
-
+        if (!err && !!allValid) {
+          cb(null, true); // 
+        }
+        cb(err, false);
       });
-      //do all checks
-
-    //coupon doesn't exist
-    //item is out of stock
-    validationCalls.map()
-
-    validationCalls.done()
-
-    //async, if all complete,
-    //
   }
 
   static getTotalCost(id) {
