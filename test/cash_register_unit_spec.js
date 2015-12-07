@@ -45,10 +45,6 @@ describe('Cash Register', function() {
       expect(typeof cash.addDiscount).toBe('function');
     });
 
-    it('should have a currentTransaction method', function() {
-      
-    });
-    
   });
 
   describe('scan functionality', function() {
