@@ -2,7 +2,6 @@
 
 let TransactionsController = require("./services/Transactions.js");
 let InventoryController = require("./services/Inventory.js");
-let PricingController = require("./services/Pricing.js");
 let DiscountsController = require("./services/Discounts.js");
 
 class CashRegister {
@@ -21,8 +20,11 @@ class CashRegister {
   endTransaction(id, cb) {
     //must update. To be completed after updateTransaction
     CashRegister.checkIfTransactionIsValid(id,
-      (err, isValid, transaction)=> {
-        return cb(err, isValid, transaction);
+      (err, isValid, transactionObj)=> {
+        if (!!isValid) {
+          transaction.completed = true;
+          CashRegister.updateTransaction(transaction, cb);
+        }
       });
   }
 
@@ -36,15 +38,16 @@ class CashRegister {
       });
   }
 
-
   addItem(trans_ID, item_ID, quant, cb) {
+    //no error checking because it happens in scanAndAdd?
     //get and validate
     TransactionsController.getTransaction(trans_ID,
       (err, transactionJSON) => {
         //transactionJSON might be null
         if (!!transactionJSON) {
           let trans_obj = JSON.parse(transactionJSON);
-          if (CashRegister.transactionJSON_isValid(trans_obj)){//???
+          if (CashRegister.transactionJSON_isValid(trans_obj)){
+            //if item already exists, increment or update?
             trans_obj.itemList.push(item_ID, quant);
             CashRegister.updateTransaction(trans_obj, (err, trans) => {
               cb(err, trans);
@@ -55,17 +58,59 @@ class CashRegister {
     );
   }
 
+  scanAndAdd(id, cb, flag, qty) {
+    //for item usage: expects: str, fn, 'item', num
+    //for discount: expects: str, fn, 'discount', null
+    if (!flag && typeof flag === 'string') {
+      //flag exists
+      if (flag === 'discount') {
+        if (qty !== null) {
+          let err = new Error("Discount should not have a quantity.");
+          cb(err, null);
+        } else {
+          this.scanDiscount(id, () => {
+            CashRegister.addDiscount(id, discount.id, (err, trans) => {
+              //JSON??
+              if (!err) {
+                return cb(err, trans);
+              }
+              //ERROR MESSAGE HERE
+            });
+          });
+        }
+
+      }
+      if (flag === 'item') {
+        if (typeof qty !== 'number') {
+          let err = new Error("Items must be added with a qty (number).")
+          cb(err, null);
+        } else {
+          this.scanItem(id, (err, item) => {
+            if (!err) {
+              CashRegister.addItem(id, item.id, qty, (err, trans) => {
+                if (!err){
+                  return cb(err, trans);
+                }
+                //ERROR MESSAGE HERE
+              });
+            }
+          });
+        }
+      }
+    }
+  }
+
   scanDiscount(couponID, cb) {
     DiscountsController.getDetails(couponID)
       .then((err, discount) => {
         if (err) {
           throw new Error('errorText');
         }
-        cb(err, item);
+        cb(err, discount);
       });
   }
 
-  addDiscount(trans_ID, Discount_ID, quant, cb) {
+  addDiscount(trans_ID, Discount_ID, cb) {
     //get and validate
     TransactionsController.getTransaction(trans_ID,
       (err, transactionJSON) => {
@@ -73,7 +118,7 @@ class CashRegister {
         if (!!transactionJSON) {
           let trans_obj = JSON.parse(transactionJSON);
           if (CashRegister.transactionJSON_isValid(trans_obj)){//???
-            trans_obj.CouponList.push(Discount_ID, quant);
+            trans_obj.CouponList.push(Discount_ID);
             CashRegister.updateTransaction(trans_obj, (err, trans) => {
               cb(err, trans);
             });
@@ -83,16 +128,15 @@ class CashRegister {
     );
   }
   
-  static updateTransaction(id, JSON) {
+  static updateTransaction(trans_obj, cb) {
     //will use validate
     //could update completed?
-    //
-    TransactionsController.getTransaction(trans_ID,
-      (err, transaction)=> {
-        if (!!transaction) {
-
-        } 
-      })
+    TransactionsController.updateID(trans_obj,
+      (err, transactionJSON)=> {
+        let updated_transaction = JSON.parse(transactionJSON);
+        cb(err, updated_transaction);
+      }
+    );
   }
 
   static checkIfTransactionIsValid(transaction, cb) {
@@ -105,8 +149,8 @@ class CashRegister {
     //this is a transaction that exists in the DB
     TransactionController.getTransaction(transaction.id)
       //transaction doesn't exist, defensive
-      .then((err, foundTransaction) => {
-        let fetchedTransaction = foundTransaction;
+      .then((err, transactionJSON) => {
+        let fetchedTransaction = JSON.parse(foundTransaction);
         if (!err ) {
           return InventoryController.checkIfItemsInStock(fetchedTransaction.itemList);
         }
@@ -114,7 +158,7 @@ class CashRegister {
       })
       .then((err, allInStock) => {
         if (!err && !!allInStock) {
-          return DiscountsController.getDiscounts(fetchedTransaction.currentDiscounts);
+          return DiscountsController.getDiscounts(fetchedTransaction.discountList);
         }
         cb(err, false);
       })
@@ -126,19 +170,65 @@ class CashRegister {
       });
   }
 
-  static getTotalCost(id) {
-
+  static getTotalCost(id, cb) {
+    CashRegister.getTransaction(id, cb, "cost");
   }
 
-  static getListOfItems(id) {
-
+  static getListOfItems(id, cb) {
+    CashRegister.getTransaction(id, cb "items");
   }
 
+  static getTransaction(id, cb, flag = undefined) {
+    if (!!flag) {
+      //flag exists
+      if (flag !== 'cost' || flag !== 'items') {
+      //not cost or items
+      let err = new Error("get Flag must be 'cost', 'items', or undefined");
+      cb (err, null);
+      }
+    }
+    TransactionsController.getTransaction(id, 
+      (err, transactionJSON) => {
+        if (!flag) {
+          //no flag, want only JSON
+          cb(err, transactionJSON);
+        } else {
+          let transaction = JSON.parse(transactionJSON);
+          //flag exists, fetch cost or return list
+          let result = (flag === "cost") ? calc_cost(transaction) : 
+          calc_list(transaction);
+          cb(err, result);
+        }
+      }
+    );
 
+    //returns a total cost number
+    calc_cost() => {
+      //iterate through the list, tabulating cost
+      //apply discount how?
+      //
+      // for %s, add a discount item with a negative value
+    }
 
+    //returns a list of items, including free items from discounts
+    calc_list(transaction) => {
+      return transaction.itemList;
+      //iterate through the list, getting total
+    }
+    //refactor into transactionsController
+  }
+
+  static generateDiscounts(transaction) => {
+    transaction.discountList.forEach()
+    //returns an array of {type %, or type %/x-y}
+  }
+
+  static applyDiscounts(transaction) => {
+    //applies a discount, appends 
+    // freeItems
+    // negative cost 'discount items'
+  }
 
 }
-
-
 
 module.exports = CashRegister;
