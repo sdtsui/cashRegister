@@ -4,9 +4,31 @@ let CashRegister = require("./CashRegister.js");
 
 describe('Cash Register', function() {
   
+  describe('Static Methods', function() {
+    beforeEach(() => {
+      let cash = new CashRegister();
+    });
+
+    it('should have getTransactionCost method', function() {
+          
+    });    
+
+    it('should have getTransactionItemList method', function() {
+      
+    });
+
+    it('should have updateTransaction method', function() {
+      
+    });
 
 
-  describe('methods', function() {
+    it('should have checkIfTransactionIsValid method', function() {
+      
+    });
+
+  });
+
+  describe('instance methods', function() {
     beforeEach(() => {
       let cash = new CashRegister();
     });
@@ -21,11 +43,11 @@ describe('Cash Register', function() {
     });
     
     it('should have a scanDiscount method', function() {
-      
+      expect(typeof cash.scanDiscount).toBe('function');
     });
 
     it('should have a way to apply discounts', function() {
-      
+      expect(typeof cash.addDiscount).toBe('function');
     });
 
     it('should have a currentTransaction method', function() {
