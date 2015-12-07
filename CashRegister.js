@@ -10,6 +10,22 @@ class CashRegister {
 
   } 
 
+  startTransaction(cb) {
+    TransactionsController.createNew()
+      .then((err, transactionJSON) => {
+        let trans_obj = JSON.parse(transactionJSON);
+        cb(err, trans_obj.ID);
+      })
+  }
+
+  endTransaction(id, cb) {
+    //must update. To be completed after updateTransaction
+    CashRegister.checkIfTransactionIsValid(id,
+      (err, isValid, transaction)=> {
+        return cb(err, isValid, transaction);
+      });
+  }
+
   scanItem(itemID, cb) {
     InventoryController.getDetails(itemID)
       .then((err, item) => {
@@ -20,14 +36,9 @@ class CashRegister {
       });
   }
 
-  scanDiscount() {
-
-  }
-
 
   addItem(trans_ID, item_ID, quant, cb) {
-    //only if valid, we can do below??
-
+    //get and validate
     TransactionsController.getTransaction(trans_ID,
       (err, transactionJSON) => {
         //transactionJSON might be null
@@ -41,65 +52,75 @@ class CashRegister {
           }
         }
       }
-      )
+    );
   }
 
-
-  startTransaction() {
-
+  scanDiscount(couponID, cb) {
+    DiscountsController.getDetails(couponID)
+      .then((err, discount) => {
+        if (err) {
+          throw new Error('errorText');
+        }
+        cb(err, item);
+      });
   }
 
-  /**
-   * returns current list of items
-   * @return {[type]} [description]
-   */
-  get currentTransactionItemList() {
-
+  addDiscount(trans_ID, Discount_ID, quant, cb) {
+    //get and validate
+    TransactionsController.getTransaction(trans_ID,
+      (err, transactionJSON) => {
+        //transactionJSON might be null
+        if (!!transactionJSON) {
+          let trans_obj = JSON.parse(transactionJSON);
+          if (CashRegister.transactionJSON_isValid(trans_obj)){//???
+            trans_obj.CouponList.push(Discount_ID, quant);
+            CashRegister.updateTransaction(trans_obj, (err, trans) => {
+              cb(err, trans);
+            });
+          }
+        }
+      }
+    );
   }
-
-  //returns total cost of current list of items
-  get currentTransactionTotalCost() {
-
-  }
-
-  //Helper
-  removeDiscount() {
-    /**
-     * finds and removes one instance of the current discount;
-     *
-     * returns true if a discount was removed.
-     */
-  }
-
-  /**
-   * Assumption / tech debt: maybe a transaction should be its own
-   * type-safe list. Too much abstraction?
-   */
   
   static updateTransaction(id, JSON) {
     //will use validate
     //could update completed?
+    //
+    TransactionsController.getTransaction(trans_ID,
+      (err, transaction)=> {
+        if (!!transaction) {
+
+        } 
+      })
   }
 
   static checkIfTransactionIsValid(transaction, cb) {
+    //if number, is an ID. if object, get ID.
+    let getID = typeof transaction === 'number' ? transaction : 
+      typeof transaction === 'object' ? transaction.id : null;
+      //null is the error case
+    let fetchedTransaction = null;
+
     //this is a transaction that exists in the DB
     TransactionController.getTransaction(transaction.id)
       //transaction doesn't exist, defensive
-      .then((err, trans) => {
+      .then((err, foundTransaction) => {
+        let fetchedTransaction = foundTransaction;
         if (!err ) {
-          InventoryController.checkIfItemsInStock(transaction.itemList);
+          return InventoryController.checkIfItemsInStock(fetchedTransaction.itemList);
         }
         cb(err, false);
       })
       .then((err, allInStock) => {
         if (!err && !!allInStock) {
-          DiscountsController.getDiscounts(transaction.currentDiscounts);
+          return DiscountsController.getDiscounts(fetchedTransaction.currentDiscounts);
         }
         cb(err, false);
       })
       .then((err, allValid) => {
         if (!err && !!allValid) {
-          cb(null, true); // 
+          return cb(null, true, fetchedTransaction);
         }
         cb(err, false);
       });
