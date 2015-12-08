@@ -27,6 +27,14 @@ class CashRegister {
   constuctor() {
   } 
 
+  //retrieves a controller: currently used for item and discounts.
+  //Almost fully reusable:  logic in add still conforms 
+  //to 'item' and 'discount' specifications
+  static getController(type) {
+    return __CONTROLLERS[type];
+  }
+
+
   /**
    * [Creates a new transaction, using the transactionController.]
    * @param  {Function} cb [expects the new transaction object (parsed JSON)]
@@ -78,10 +86,6 @@ class CashRegister {
     });
   }
 
-  static getController(type) {
-    return __CONTROLLERS[type];
-  }
-
   /**
    * "Scans" an item or discount, 
    * returning the details of an item or discount (parsed JSON)
@@ -89,7 +93,6 @@ class CashRegister {
    * @param  {Function} cb     [callback, accepts (err, item or discount)]
    * item spec {id: , name:, description:, unit: , rate}
    * discount spec {id: , name: ,description:, type:, value: }
-   * @return {[type]}          []
    */
   scan(type, ID, cb) {
     if (!type) {
@@ -171,9 +174,8 @@ class CashRegister {
   /**
    * Updates a transaction, so the transaction with a matching ID will have 
    * the same properties.
-   * @param  {[type]}   transaction [transaction object]
+   * @param  {[transaction]}    [transaction object]
    * @param  {Function} cb          [callback expects the same (updated) transaction]
-   * @return {[type]}               [description]
    */
   static updateTransaction(transaction, cb) {
     TransactionsController.updateOne(transaction,
@@ -211,77 +213,60 @@ class CashRegister {
    * @param  {Function} cb   [expects an expanded, human-readable transaction]
    */
   static displayTransaction(flag, id, cb) {
-    //get 
-    if (!flag) {
-
-    }
-  }
-  /**
-   * Breaker 2: 
-   *
-   * pseudocode: fetch a transaction, then fetch items, then apply discount
-   */
-  //calls displayTransaction with a 'cost' flag, invoking a callback with the total cost
-  static displayTransactionCost(id, cb) {
-    CashRegister.displayTransaction(id, cb, "cost");
-  }
-
-  //pseudocode: fetch a transaction, then fetch items, return the list. Partial
-  //calls displayTransaction with a 'items' flag, invoking a callback with the list of items
-  static displayTransactionList(id, cb) {
-    CashRegister.displayTransaction(id, cb, "items");
-  }
-
-
-  //gets a transaction using findOne
-  //Todo: complete error checking with this function, and removal of all instances of:
-  //  `TransactionsController.findOne` in CashRegister code.
-  //  More explicit code commenting
-  static getTransaction(id, cb, flag) {
-    if (!!flag) {
-      //flag exists
-      if (flag !== 'cost' || flag !== 'items') {
-      //not cost or items
-      let err = new Error("get Flag must be 'cost', 'items', or undefined");
-      cb (err, null);
+    TransactionsController.findOne(id, (err, transaction) => {
+      if (err) {
+        return cb && cb(err, null);
       }
-    }
-    TransactionsController.findOne(id, 
-      (err, transactionJSON) => {
-        if (!flag) {
-          //no flag, want only JSON
-          cb(err, transactionJSON);
-        } else {
-          let transaction = JSON.parse(transactionJSON);
-          //flag exists, fetch cost or return list
-          let result = (flag === "cost") ? calc_cost(transaction) : 
-          calc_list(transaction);
-          cb(err, result);
+      CashRegister.checkIfTransactionIsValid(transaction, 
+        //if transaction is valid
+        (err, transaction) => {
+          if (err) {
+            return cb && cb(err, null);
+          }
+          let id = transaction.id; 
+
+          if (!!flag) {
+            if (flag === 'cost') {
+              TransactionsController.totalTransaction(id, (err, total) => {
+                if (err || !total) {
+                  return cb && cb(err, null);
+                }
+                return cb && cb(null, total);
+              });
+            }
+
+            if (flag === 'items') {
+              TransactionsController.getTransactionList(id, (err, list) => {
+                if (err || !list) {
+                  return cb && cb(err, null);
+                }
+                return cb && cb(null, total);
+              });
+            }
+          }
+          // no flag, return some (TBD) finalized state of
+          // the transaction, holding items, discounts, and 
+          // application of discounts
+          TransactionsController.tabulateTransaction(id, (err, transaction) => {
+            if (err || !transaction) {
+              return cb && cb(err, null);
+            }
+            return cb && cb(null, transaction);
+          });
         }
-      }
-    );
-
-
-
-    /**
-     * Incomplete: will refactor, so this logic is in transaction service
-     */
-    //returns a total cost number
-    function calc_cost(){
-      //iterate through the list, tabulating cost
-      //apply discount how?
-      //
-      // for %s, add a discount item with a negative value
-    }
-
-    //returns a list of items, including free items from discounts
-    function calc_list(transaction){
-      return transaction.itemList;
-      //iterate through the list, getting total
-    }
-    //refactor into transactionsController
+      );
+    });
   }
 
+  //calls displayTransaction with 'cost' flag, invoking a callback with the total cost
+  static displayTransactionCost(id, cb) {
+    CashRegister.displayTransaction.bind(this, "cost")(id, cb);
+  }
+
+  //calls displayTransaction with 'items' flag, invoking a callback with the list of items
+  static displayTransactionList(id, cb) {
+    CashRegister.displayTransaction.bind(this, "list")(id, cb);
+  }
 }
 
 module.exports = CashRegister;
