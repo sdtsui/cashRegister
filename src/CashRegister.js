@@ -191,7 +191,7 @@ class CashRegister {
   /**
    * Checks if a transaction associated with an ID is valid.
    * Assumes validity logic is in the transaction service.
-   * @param  {[type]}   id [id]
+   * @param  {[number]}   id [id]
    * @param  {Function} cb [callback, expects a transaction object (parsed JSON)]
    */
   static checkIfTransactionIsValid(id, cb) {
@@ -267,6 +267,7 @@ class CashRegister {
   static displayTransactionList(id, cb) {
     CashRegister.displayTransaction.bind(this, "list")(id, cb);
   }
+  
 }
 
 module.exports = CashRegister;
