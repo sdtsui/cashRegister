@@ -1,6 +1,4 @@
-
-
-## Overview of Services
+## Overview of Services (Deprecated now that tabulation logic is in transactionService)
 
 All of the methods outlined in this specification accept a callback, should accept `cb` as their last parameter. 
 
@@ -11,7 +9,7 @@ The discount and inventory services provide an interface for the Cash Register t
 
 ##### Inventory:
 Methods used: 
-  *`FindOne()`*
+  *`findOne()`*
 
   Looks for a specific itemID in the inventory, returning JSON representing the item
   {
@@ -22,13 +20,6 @@ Methods used:
     rate: 
   }
 
-  *`checkIfItemsInStock()`*
-  Accepts an array and returns 
-    err, 
-    allInStock, 
-      -true or false, if all items are in stock
-    missingItems, 
-      -an array of out-of-stock items
 
 ##### Discounts:
 Methods used: 
@@ -114,4 +105,7 @@ Methods Used:
   Note that the transactionService doesn't hold a total. That is always calculated upon request, when the cashRegister needs to display a total.
   If the information is not cached (not implemented), the cashRegister will need to first query the ItemService for human-readable names and rates (by quantity/weight). After that, it will query the TransactionService.
 
-  This is preferrable to storing the items, rates, and discount-application rules in the transaction, because all changes can to those services can be self-contained, and any operations on a transaction will not require passing transactions around: only the cashRegister (or other interface) needs to query a service for desired information/functionality  (like applying discounts, or logic for calculating totals).
+  This is preferrable to storing the items, rates, and discount-application rules in the transaction, because all changes to those services can be self-contained, and any operations on a transaction will not require passing transactions around: only the cashRegister (or other interface) needs to query a service for desired information/functionality  (like applying discounts, or logic for calculating totals).
+
+  (Preferred, but not implemented. TransactionService now has `displayTransaction`, `displayTransactionList`, and `.displayTransactionCost` methods.
+  However, the main anti-pattern of Transaction Service passing transaction state around to be modified, is avoided. All of the tabulation logic occurs in one place, and is sent back to CashRegister.)

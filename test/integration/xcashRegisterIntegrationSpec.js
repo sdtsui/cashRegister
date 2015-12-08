@@ -3,10 +3,14 @@ let CashRegister = require("../src/CashRegister.js");
 // import { it, before, after, beforeEach, afterEach } from 'arrow-mocha'
 let expect = require('expect');
 
+/**
+ * Incomplete.
+ */
+
 xdescribe('Cases: ', function() {
   xdescribe('Create New Transaction', function() {
     let cashOne = new CashRegister();
-    // cashOne.startTransaction();
+    cashOne.startTransaction();
   });
 
   xdescribe('Insert One, fetch list/cost', () => {
