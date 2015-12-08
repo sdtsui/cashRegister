@@ -5,7 +5,9 @@ let InventoryController = require("./services/Inventory.js");
 let DiscountsController = require("./services/Discounts.js");
 
 class CashRegister {
+  
   constuctor() {
+
   } 
 
   //creates a new transaction, using the transactionController and returns it

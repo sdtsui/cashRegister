@@ -1,18 +1,8 @@
 
 Note: 
-
-Opt1: 
-Cut scope: focus on product review; Max 2h for cleanup and mocking. 
-- Does not need to be functional ? 
-
-
-Opt2: 
-- Single functional test case inserting and checking. 2h refactor, 30m test case writing, 2h mocking, 1h code cleanup?
-
-
-
-Code smells to fix:
-0. refactor out of promises. remove all instances of .then
+\
+0. Architecture: 
+ + Transaction Flow
 
 1. error vs callbacks:
 
@@ -21,8 +11,6 @@ Each for ECCS:
       return callback && callback(error, null);
     }
     return callback && callback(null, course);
-
-
 
 2. Long Method names, esp on Static
 
@@ -37,3 +25,5 @@ Missing implementation details:
 3. ensure all services return JSON or objects, not either/both
   - discounts and inventory should match perfectly
   - transactions may not
+
+4. Transaction Service no longer returns JSON, remove it from docs and code

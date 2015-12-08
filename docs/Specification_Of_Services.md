@@ -86,7 +86,7 @@ Methods Used:
   finds one transaction with a matching ID and returns it
 
 `*createNew()*`
-  creates a new transaction, returning the transaction as JSON
+  creates a new transaction, returning the transaction
 
 `*applyDiscounts()*`
   returning the transaction as JSON, with two additional properties:
@@ -100,3 +100,13 @@ Methods Used:
   not perfect right now, as it could easily override existing transactions, trusting its caller to perform validation.
 
   Transaction service should handle possible erroneous overriding either by storing old copies of transactions and enabling the frontend to query for them, or building out basic error checking on top of CRUD functionality for our Transactions service. 
+
+##### Transactions: 
+  TransactionService expects JSON from the database, and will convert it into an object.
+  An example would be: 
+  {
+    id: 1,
+    completed: false,
+    itemIDList: [],
+    couponIDList: [],
+  }
