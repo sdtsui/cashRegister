@@ -1,3 +1,4 @@
+//Incomplete Stubbed Service.
 class Inventory {
   constructor() {
     this.items = [];

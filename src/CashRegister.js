@@ -4,224 +4,218 @@ let TransactionsController = require("./services/Transactions.js");
 let InventoryController = require("./services/Inventory.js");
 let DiscountsController = require("./services/Discounts.js");
 
+let __CONTROLLERS = {
+  "item" : InventoryController,
+  "discounts" : DiscountsController,
+  "transactions" : TransactionsController,
+}
+/**
+ * CashRegister is a Cash Register service layer. 
+ * It supports: 
+ *   - scanning of items by quantity and weight.
+ *   - adding discounts by "percentage of total cost", and "x-for-y"
+ *   - querying for the total cost, or a current list of items
+ *
+ * CashRegister is loosely coupled with the following child (for now) services:
+ *   - Transactions: which keeps track of items and discounts for individual transactions
+ *   - Inventory: which keeps track of stock and details of items
+ *   - Discounts: which keeps track of coupons (aka discounts), 
+ *   and logic for applying them to transactions
+ */
 class CashRegister {
-  
-  constuctor() {
 
+  constuctor() {
   } 
 
-  //creates a new transaction, using the transactionController and returns it
+  /**
+   * [Creates a new transaction, using the transactionController.]
+   * @param  {Function} cb [expects the new transaction object (parsed JSON)]
+   * @return {[type]}      [description]
+   */
   startTransaction(cb) {
     TransactionsController.createNew()
-      .then((err, transactionJSON) => {
+      .then((err, transaction) => {
         if(!err) {
-          return cb && cb(null, transactionJSON);
+          return cb && cb(null, transaction);
         }
         return cb && cb(err, null);
       })
   }
 
-  // inputs: transaction id, and callback
-  // outputs: none
-  // side effects: if transaction is valid, updates it with transactionController
-  // Todo: logic for invalid transactions. Return an error message.
+  /**
+   * Ends a transaction by first checking if it is valid:
+   *   if valid:
+   *     find all items : apply them, returning a new transaction
+   *     find all discounts : apply them, returning a new transaction 
+   * @param  {[number]}   id [transaction ID]
+   * @param  {Function} cb [expects a processed, human-readable transaction]
+   */
   endTransaction(id, cb) {
     CashRegister.checkIfTransactionIsValid(id,
-      (err, isValid, transactionObj)=> {
-        if (!!isValid) {
-          transaction.completed = true;
-          CashRegister.updateTransaction(transaction, cb);
-        }
-      });
-  }
-
-  //Inputs: itemID, and cb
-  // outputs: none
-  // side effects: invokes callbacks on a found item, or passes an error
-  scanItem(itemID, cb) {
-    InventoryController.findOne(itemID, (err, item) => {
+      (err, isValid, validTransaction)=> {
         if (err) {
           return cb && cb(err, null);
         }
-        return cb && cb(null, item);
-      });
-  }
-
-
-  //Inputs: transactionID, itemID, quantity, callback
-  //finds the transaction, validates it, and updates with quantity of item
-  //if successful, invokes callback on new item
-  //Todo: error checking, invoking callback on error
-  addItem(trans_ID, item_ID, quant, cb) {
-    //no error checking because it happens in scanAndAdd?
-    //get and validate
-    TransactionsController.findOne(trans_ID,
-      (err, transactionJSON) => {
-        //transactionJSON might be null
-        if (!!transactionJSON) {
-          let trans_obj = JSON.parse(transactionJSON);
-          if (CashRegister.transactionJSON_isValid(trans_obj)){
-            //if item already exists, increment or update?
-            trans_obj.itemList.push(item_ID, quant);
-            CashRegister.updateTransaction(trans_obj, (err, trans) => {
-              cb(err, trans);
-            });
-          }
-        }
-      }
-    );
-  }
-
-  //Not meant to be called externally. 
-  //Scans and adds a discount or item, depending on flag.
-  //todo: error checking. improve dry-ness of code.
-  //
-  //for `item` usage: expects: str, fn, 'item', num
-  //for `discount` usage: expects: str, fn, 'discount', null
-  scanAndAdd(id, flag, qty, cb) {
-    if (!flag && typeof flag === 'string') {
-      //flag exists
-      if (flag === 'discount') {
-        if (qty !== null) {
-          let err = new Error("Discount should not have a quantity.");
-          cb(err, null);
-        } else {
-          this.scanDiscount(id, () => {
-            CashRegister.addDiscount(id, discount.id, (err, trans) => {
-              //JSON??
-              if (!err) {
-                return cb(err, trans);
+        if (!!isValid) {
+          //if valid, complete it and update transactions
+          validTransaction.completed = true;
+          CashRegister.updateTransaction(validTransaction, 
+            (err, completedTransaction) => {
+              if (err) {
+                return cb && cb(err, null);
               }
-              //ERROR MESSAGE HERE
-            });
-          });
-        }
-
-      }
-      if (flag === 'item') {
-        if (typeof qty !== 'number') {
-          let err = new Error("Items must be added with a qty (number).")
-          cb(err, null);
-        } else {
-          this.scanItem(id, (err, item) => {
-            if (!err) {
-              CashRegister.addItem(id, item.id, qty, (err, trans) => {
-                if (!err){
-                  return cb(err, trans);
-                }
-                //ERROR MESSAGE HERE
+              //successful update, now display invoke callback with 
+              //a readable transaction
+              CashRegister.displayTransaction(completedTransaction, 
+                (err, processedTransaction) => {
+                  if (err) {
+                    return cb && cb(err, null);
+                  }
+                  return cb && cb(null, processedTransaction);
               });
+          });
+          
+        }
+    });
+  }
+
+  static getController(type) {
+    return __CONTROLLERS[type];
+  }
+
+  /**
+   * "Scans" an item or discount, 
+   * returning the details of an item or discount (parsed JSON)
+   * @param  {[number]}   itemID [itemID]
+   * @param  {Function} cb     [callback, accepts (err, item or discount)]
+   * item spec {id: , name:, description:, unit: , rate}
+   * discount spec {id: , name: ,description:, type:, value: }
+   * @return {[type]}          []
+   */
+  scan(type, ID, cb) {
+    if (!type) {
+      let err = "Type is required to scan."
+      return cb && cb (err, null);
+    }
+    let controller = CashRegister.getController(type);
+    controller.findOne(ID, (err, found) => {
+      if (err) {
+        return cb && cb(err, null);
+      }
+      if (!!found) {
+        return cb && cb(null, found);
+      }
+      return cb && cb(null, null);
+    });
+  }
+
+  scanItem(itemID, cb) {
+    let scanItemFn = this.scan.bind(this, "item");
+    return scanItemFn(discountID, cb);
+  }
+  scanDiscount(discountID, cb) {
+    let scanDiscountFn = this.scan.bind(this, "discount");
+    return scanDiscountFn(discountID, cb);
+  }
+
+  /**
+   * [Adds an item or discount to a specific transaction.]
+   * @param {[number]}   transactionID [transactionID]
+   * @param {[number]}   ID  [itemID or discountID]
+   * @param {[number]}   quant    [quantity purchased, independent of unit]
+   * @param {Function} cb       [callback, expects transaction object]
+   */
+  add(type, transactionID, ID, quantOrVal, cb) {
+    this.scanItem(type, ID, (err, item) => {
+      if (!!err || !item) {
+        return cb && cb(err, null);
+      }
+      //scan successful
+      let controller = CashRegister.getController(type);
+      controller.findOne(transactionID,
+        (err, transaction) => {
+          if (!!err || !transaction) {
+            return cb && cb(err, null);
+          }
+          //Tech Debt: limits this function to only items and discount specs.
+          //Function signature 'quantOrVal' has the same problem.
+          //Conclusion: transaction should have just {items, and discounts}
+          let listName = (type === 'item') ? 'itemList' : 'discountList';
+          let valueName = (type === 'item') ? 'quant' : 'value';
+          let newEntry = {};
+          newEntry["ID"] = ID;
+          newEntry[valueName] = quantOrVal
+          transaction[listName].push(newEntry);
+
+          CashRegister.updateTransaction(transaction, (err, trans) => {
+            if(err) {
+              return cb && cb(err, null);
             }
+            cb(err, trans);
           });
         }
-      }
-    }
+      );
+      
+    });
   }
 
-  //Similar to .scanItem, but for Discounts, using the discountController
-  scanDiscount(couponID, cb) {
-    DiscountsController.findOne(couponID)
-      .then((err, discount) => {
+  addDiscount(transactionID, discountID, value, cb) {
+    let addDiscountFn = this.add.bind(this, "discount");
+    return addDiscountFn(transactionID, discountID, value, cb);
+  }
+
+  addItem(transactionID, itemID, quant, cb) {
+    let addItemFn = this.add.bind(this, "item");
+    return addItemFn(transactionID, itemID, quant, cb);
+  }
+
+  /**
+   * Updates a transaction, so the transaction with a matching ID will have 
+   * the same properties.
+   * @param  {[type]}   transaction [transaction object]
+   * @param  {Function} cb          [callback expects the same (updated) transaction]
+   * @return {[type]}               [description]
+   */
+  static updateTransaction(transaction, cb) {
+    TransactionsController.updateOne(transaction,
+      (err, updatedTransaction)=> {
         if (err) {
-          throw new Error('errorText');
+          return cb && cb(err, null);
         }
-        cb(err, discount);
-      });
-  }
-
-  //Similar to .addItem, but for Discounts, using the discountController
-  addDiscount(trans_ID, Discount_ID, cb) {
-    //get and validate
-    TransactionsController.findOne(trans_ID,
-      (err, transactionJSON) => {
-        //transactionJSON might be null
-        if (!!transactionJSON) {
-          let trans_obj = JSON.parse(transactionJSON);
-          if (CashRegister.transactionJSON_isValid(trans_obj)){//???
-            trans_obj.CouponList.push(Discount_ID);
-            CashRegister.updateTransaction(trans_obj, (err, trans) => {
-              cb(err, trans);
-            });
-          }
-        }
-      }
-    );
-  }
-  
-  //takes a transaction objed and updates it in the transactionController
-  //Todo: input validation?
-  static updateTransaction(trans_obj, cb) {
-    TransactionsController.updateOne(trans_obj,
-      (err, transactionJSON)=> {
-        let updated_transaction = JSON.parse(transactionJSON);
-        cb(err, updated_transaction);
+        return cb && cb(null, updatedTransaction);
       }
     );
   }
 
-  //checks if a transaction is vaid by checking if:
-  //transaction exists on the back-end
-  //all items are in stock
-  //all discounts are valid
-  //
-  //if so, invokes callback on the valid transaction
-  //otherwise, invokes callback with a error
-  //
-  //todo: more explicit commenting
-  static checkIfTransactionIsValid(transaction, cb) {
-    //if number, is an ID. if object, get ID.
-    let getID = typeof transaction === 'number' ? transaction : 
-      typeof transaction === 'object' ? transaction.id : null;
-      //null is the error case
-    let fetchedTransaction = null;
-
-    //this is a transaction that exists in the DB
-    TransactionController.getTransaction(transaction.id)
-      //transaction doesn't exist, defensive
-      .then((err, transactionJSON) => {
-        let fetchedTransaction = JSON.parse(foundTransaction);
-        if (!err ) {
-          return InventoryController.checkIfItemsInStock(fetchedTransaction.itemList);
-        }
-        cb(err, false);
-      })
-      .then((err, allInStock) => {
-        if (err) {
-          cb(err, false, null);
-        }
-
-        if (!allInStock) {
-          cb(err, false, undefined); //list of out of stock should go here
-        }
-
-        if (!err && !!allInStock) {
-          return DiscountsController.checkIfDiscountsValid(fetchedTransaction.discountList);
-        }
-      })
-      .then((err, allValid) => {
-        if (err) {
-          cb(err, false, null);
-        }
-
-        if (!allInStock) {
-          cb(err, false, undefined); //list of invalid should go here
-        }
-
-        if (!err && !!allValid) {
-          return cb(null, true, fetchedTransaction);
-        }
-      });
+  /**
+   * Checks if a transaction associated with an ID is valid.
+   * Assumes validity logic is in the transaction service.
+   * @param  {[type]}   id [id]
+   * @param  {Function} cb [callback, expects a transaction object (parsed JSON)]
+   */
+  static checkIfTransactionIsValid(id, cb) {
+    TransactionsController.checkIfValid(id, (err, transaction) => {
+      if (err) {
+        return cb && cb(err, null);
+      }
+      return cb && cB(null, transaction);
+    })
   }
   
-  //calls getTransaction with a 'cost' flag, invoking a callback with the total cost
-  static getTransactionCost(id, cb) {
-    CashRegister.getTransaction(id, cb, "cost");
+  /**
+   * Breaker 2: 
+   *
+   * pseudocode: fetch a transaction, then fetch items, then apply discount
+   */
+  //calls displayTransaction with a 'cost' flag, invoking a callback with the total cost
+  static displayTransactionCost(id, cb) {
+    CashRegister.displayTransaction(id, cb, "cost");
   }
 
-
-  //calls getTransaction with a 'items' flag, invoking a callback with the list of items
-  static getTransactionItemList(id, cb) {
-    CashRegister.getTransaction(id, cb, "items");
+  //pseudocode: fetch a transaction, then fetch items, return the list. Partial
+  //calls displayTransaction with a 'items' flag, invoking a callback with the list of items
+  static displayTransactionList(id, cb) {
+    CashRegister.displayTransaction(id, cb, "items");
   }
 
 
@@ -272,20 +266,6 @@ class CashRegister {
       //iterate through the list, getting total
     }
     //refactor into transactionsController
-  }
-
-
-  //Pleaceholder function for discounts. Logic will be stubbed in transactionController
-  static generateDiscounts(transaction) {
-    transaction.discountList.forEach()
-    //returns an array of {type %, or type %/x-y}
-  }
-
-  //Pleaceholder function for discounts. Logic will be stubbed in transactionController
-  static applyDiscounts(transaction) {
-    //applies a discount, appends 
-    // freeItems
-    // negative cost 'discount items'
   }
 
 }

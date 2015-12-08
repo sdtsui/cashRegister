@@ -110,3 +110,8 @@ Methods Used:
     itemIDList: [],
     couponIDList: [],
   }
+
+  Note that the transactionService doesn't hold a total. That is always calculated upon request, when the cashRegister needs to display a total.
+  If the information is not cached (not implemented), the cashRegister will need to first query the ItemService for human-readable names and rates (by quantity/weight). After that, it will query the TransactionService.
+
+  This is preferrable to storing the items, rates, and discount-application rules in the transaction, because all changes can to those services can be self-contained, and any operations on a transaction will not require passing transactions around: only the cashRegister (or other interface) needs to query a service for desired information/functionality  (like applying discounts, or logic for calculating totals).
