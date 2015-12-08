@@ -30,7 +30,6 @@ class CashRegister {
   /**
    * [Creates a new transaction, using the transactionController.]
    * @param  {Function} cb [expects the new transaction object (parsed JSON)]
-   * @return {[type]}      [description]
    */
   startTransaction(cb) {
     TransactionsController.createNew()
@@ -202,6 +201,21 @@ class CashRegister {
     })
   }
   
+  /**
+   * Fetches a transaction:
+   *   - converts data into human-readable format by fetching details
+   *   from inventory and discount services
+   *   - performs totalling logic, and application of discounts
+   * @param  {[string]}   flag ['cost', 'list', or undefined]
+   * @param  {[number]}   id   []
+   * @param  {Function} cb   [expects an expanded, human-readable transaction]
+   */
+  static displayTransaction(flag, id, cb) {
+    //get 
+    if (!flag) {
+
+    }
+  }
   /**
    * Breaker 2: 
    *
