@@ -1,4 +1,4 @@
-Unfinished: 
+### Open Issues
 
 0. Architectural Misses:
   - Would like Tabulation/total logic to be in CashRegister, not TransactionsService.
