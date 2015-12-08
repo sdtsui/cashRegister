@@ -24,7 +24,7 @@ let __CONTROLLERS = {
  */
 class CashRegister {
 
-  constuctor() {
+  constructor() {
   } 
 
   //retrieves a controller: currently used for item and discounts.
